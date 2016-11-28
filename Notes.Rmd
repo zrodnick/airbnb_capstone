@@ -1,0 +1,16 @@
+---
+title: "Notes"
+author: "zrodnick"
+date: "November 28, 2016"
+output: html_document
+---
+
+##Analysis ideas
+
+Relationship between booking language and destination?
+Age vs. Destination?
+Factors that lead to a non-booking?
+Time of year (Especially around holidays)
+Do English speakers go to more English speaking countries?
+
+I'm going to have to make some summary statistics out of the sessions data frame. Not sure how relevant it will be, but data is data!
