@@ -5,6 +5,13 @@ date: "November 28, 2016"
 output: html_document
 ---
 
+##Code Notes
+I converted the "-unknown-" strings into NA. I also converted "NDF" in the countries column to NA as well. In my mind, it helps differentiate it from "other" more and makes it clearer that no destination was ever booked. 
+
+Converted the dates from factors to date objects. Don't know how that will help, but can't think of a reason not to. 
+
+Merged the countries metadataset with the training set. Can't think of a reason why latitude and longitude would matter for this analysis, but I'll leave them in unless I can think of a compelling reason not to. 
+
 ##Analysis ideas
 
 Relationship between booking language and destination?
@@ -14,3 +21,13 @@ Time of year (Especially around holidays)
 Do English speakers go to more English speaking countries?
 
 I'm going to have to make some summary statistics out of the sessions data frame. Not sure how relevant it will be, but data is data!
+
+The fact that AirBnB allows "Other" as a gender option is very interesting! I would love to see how many people picked that as a gender option and what their travel habits are. Marketing to the trans community potentially?
+
+
+##Random Thoughts
+
+What does levenshtein distance from the countries df mean? 
+
+The number of insertions, deletions, or substitutions to get from one string to another? Huh. So is it the distance between target destination language and booking language? It's not clear. Define your variables!
+

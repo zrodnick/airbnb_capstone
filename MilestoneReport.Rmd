@@ -1,0 +1,30 @@
+---
+title: "Milestone Report"
+author: "zrodnick"
+date: "November 29, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+
+  This project is based on the Kaggle competition for AirBnB, located at https://www.kaggle.com/c/airbnb-recruiting-new-user-bookings/data. Based on a user's demographic data, web session data, and some summary statistics, the goal is to predict where a first-time user's booking destination will be. Based on this information, AirBnB can modify their website and marketing to better target their customers. 
+  
+##Project Goals
+
+  The first, and most obvious step involves using demographic data to predict booking destination. It is likely that age, gender, booking date, and language of origin will all be significant factors in deciding a destination. Interestingly enough, AirBnB allows "Other" as a choice of gender. Though relatively few people picked this option, it could provide interesting insight into the travel habits of the growing genderfluid community and provide valuable marketing information to this segment of the population. 
+  
+  Analyzing the session data will be more challenging. I admittedly have little experience in web design, and preliminary forays into this data set have proven more confusing than enlightening. The dataset records every action taken by users, the time to each action, and the device used. However, there are approximately 1.8 million distinct actions that the users can take, making interpreting this data very difficult. I suspect that only metadata can be gleaned from this, and I'm not sure how useful it can be. Nevertheless, the dataset was included for a reason, so there must be some way this information can prove useful. If nothing else, I would like to figure out the recorded action for finalizing a booking, so at the very least I can figure out the average time taken to book a trip and use that along with demographics to make further predictions. However, gleaning out which action out of the 1.8 million actions represents finalizing a booking may prove difficult. Perhaps I can merge the datasets to list if a particular user booked a trip or not, then use that to narrow down the actions taken. 
+    
+    
+## Data Wrangling
+
+The dataset provided by AirBnB required relatively little wrangling. It is already close to being in tidy form, with each row representing a user, and each column representing a variable describing that user. However, I did do a few things to make analysis easier. First, I changed all strings that were either blank, "-unknown-", or "NDF" (for "No Destination Found") to "NA". I felt this standardized any missing or unknown information and further differentiated it from any "Other" strings. Secondly, I merged the country information with the demographic information to make it easier to associate any qualities of the destination country with information about the booker. I'm not sure how latitude and longitude will be helpful in making predictions, but I can't think of any reason to exclude it. Finally, I changed the dates in the dataset to Date objects instead of factors. This may make analysis easier. 
+
+## Preliminary Analysis
+
+As previously mentioned, the sessions dataset poses a challenge. With over 10 million observations containing about 1.8 million distinct actions, many of which I do not recognize, sorting the signal from the noise will be difficult. Another challenge is that AirBnB is not very good about defining their variables. For example, in the sessions dataset, one of the columns is labeled "secs_elapsed". Presumably, this is recording the time between each action. However, many of them are in the tens of thousands, which corresponds to hours or even days spent on the website. I assumed this means that the numbers are in fractions of a second, possibly milliseconds, but nowhere in either the dataset or the competition website is this made clear. It could be that the users went off the website for a while and came back, which would explain the long times, but again, nowhere is this made clear. 
+
