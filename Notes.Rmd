@@ -4,6 +4,7 @@ author: "zrodnick"
 date: "November 28, 2016"
 output: html_document
 ---
+These are just informal notes for myself. Read them if you want. 
 
 ##Code Notes
 I converted the "-unknown-" strings into NA. I also converted "NDF" in the countries column to NA as well. In my mind, it helps differentiate it from "other" more and makes it clearer that no destination was ever booked. 
@@ -11,6 +12,22 @@ I converted the "-unknown-" strings into NA. I also converted "NDF" in the count
 Converted the dates from factors to date objects. Don't know how that will help, but can't think of a reason not to. 
 
 Merged the countries metadataset with the training set. Can't think of a reason why latitude and longitude would matter for this analysis, but I'll leave them in unless I can think of a compelling reason not to. 
+
+##Manipulating Sessions_df
+
+So what do I want to accomplish?
+
+Group by ID - Done, can at least do that easily.
+Count type and quantity of actions performed by each user
+I suspect the secs_elapsed column is not in seconds, since things like 67753 secs comes out to around 18 hours. I can't see anyone spending 18 hours on the website. Milliseconds maybe? 
+
+Definitely going to need some summarizing here. "Users performed action X an average of Y amount of times... etc". 
+
+Should probably spend some time familiarizing myself with AirBnB's website. Might help with understanding. 
+
+Holy crap there are about 1.8 million different actions the users can take. I have no idea what to do with this information. 
+
+I think at this point I would talk to the web people and ask what actions are really meaningful based on how they label them, since I have no idea how to sort through this mess. Give me some numbers to crunch, not this bazillion factor garbage. 
 
 ##Analysis ideas
 
@@ -20,7 +37,9 @@ Factors that lead to a non-booking?
 Time of year (Especially around holidays)
 Do English speakers go to more English speaking countries?
 
-I'm going to have to make some summary statistics out of the sessions data frame. Not sure how relevant it will be, but data is data!
+I have my suspicions that browser and computer type will be associated with age and gender. They might be interesting, but I think that age, gender, language, and source will be the more predictive factors. 
+
+I'm going to have to make some summary statistics out of the sessions data frame. Not sure how relevant it will be, but data is data! It's pretty intimidating, and I'm not sure I know enough about web design to properly interpret it. At the very least, I can summarise it as average time spent on the website, number of actions, and booked or not.  
 
 The fact that AirBnB allows "Other" as a gender option is very interesting! I would love to see how many people picked that as a gender option and what their travel habits are. Marketing to the trans community potentially?
 
