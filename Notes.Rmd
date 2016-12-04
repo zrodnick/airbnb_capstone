@@ -6,12 +6,14 @@ output: html_document
 ---
 These are just informal notes for myself. Read them if you want. 
 
-##Code Notes
+##Wrangle Notes
 I converted the "-unknown-" strings into NA. I also converted "NDF" in the countries column to NA as well. In my mind, it helps differentiate it from "other" more and makes it clearer that no destination was ever booked. 
 
 Converted the dates from factors to date objects. Don't know how that will help, but can't think of a reason not to. 
 
 Merged the countries metadataset with the training set. Can't think of a reason why latitude and longitude would matter for this analysis, but I'll leave them in unless I can think of a compelling reason not to. 
+
+Possibly create a new column that simply shows a binary trip booked or not variable. 
 
 ##Manipulating Sessions_df
 
