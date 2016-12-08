@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-  This project is based on the Kaggle competition for AirBnB, located at https://www.kaggle.com/c/airbnb-recruiting-new-user-bookings/data. Based on a user's demographic data, web session data, and some summary statistics, the goal is to predict where a first-time user's booking destination will be. Based on this information, AirBnB can modify their website and marketing to better target their customers. 
+  This project is based on the Kaggle competition for AirBnB, located at https://www.kaggle.com/c/airbnb-recruiting-new-user-bookings/data. AirBnB is a service that allows users to rent their homes out on a short term basis for travelers. Therefore, it is very advantageous to the company to track where users book vacations from their website in order to predict where travelers using their service will want to go. Based on a user's demographic data, web session data, and some summary statistics, the goal of this competition is to predict where a first-time traveler's booking destination will be. Based on this information, AirBnB can modify their website and marketing to better target their customers. 
   
 ##Project Goals
 
@@ -26,6 +26,8 @@ The dataset provided by AirBnB required relatively little wrangling. It is alrea
 
 ## Preliminary Analysis
 
-As previously mentioned, the sessions dataset poses a challenge. With over 10 million observations containing about 1.8 million distinct actions, many of which I do not recognize, sorting the signal from the noise will be difficult. Another challenge is that AirBnB is not very good about defining their variables. For example, in the sessions dataset, one of the columns is labeled "secs_elapsed". Presumably, this is recording the time between each action. However, many of them are in the tens of thousands, which corresponds to hours or even days spent on the website. I assumed this means that the numbers are in fractions of a second, possibly milliseconds, but nowhere in either the dataset or the competition website is this made clear. It could be that the users went off the website for a while and came back, which would explain the long times, but again, nowhere is this made clear. 
+<<Something about the sessions dataset here>>
+
 
 I plan to do some basic logistic regression analysis on factors that lead to whether or not someone books a trip, regardless of destination. Once that's done, and once I learn a bit more about machine learning algorithms, I can attempt to go for more complicated predictions on where that destination will be. 
+

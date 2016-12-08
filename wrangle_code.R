@@ -12,3 +12,6 @@ train_df1$date_account_created <- as.Date(train_df1$date_account_created)
 train_df1$date_first_booking<- as.Date(train_df1$date_first_booking)
 
 sessions_df <- group_by(sessions_df, user_id)
+
+actions <- as.data.frame(levels(sessions_df$action))
+colnames(actions) <- "actions"
