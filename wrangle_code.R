@@ -2,8 +2,8 @@ library(dplyr)
 library(ggplot2)
 library(tidyr)
 
-sessions_df <- read.csv("sessions.csv", header=TRUE, na.strings = c("", " ", "NA"))
-train_df_start <- read.csv("train_users_2.csv", header=TRUE, na.strings = c("", " ", "NA", "-unknown-", "NDF"))
+sessions_df <- read.csv("sessions.csv", header=TRUE)
+train_df_start <- read.csv("train_users_2.csv", header=TRUE)
 summarystats_df <- read.csv("age_gender_bkts.csv")
 countries_df <- read.csv("countries.csv")
 
@@ -15,3 +15,6 @@ sessions_df <- group_by(sessions_df, user_id)
 
 actions <- as.data.frame(levels(sessions_df$action))
 colnames(actions) <- "actions"
+
+train_df1$booked <- train_df1$country_destination != "NDF"
+train_df2 <- train_df1[, c(1:15,23,16:22)]
