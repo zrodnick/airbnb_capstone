@@ -7,15 +7,50 @@ output: html_document
 These are just informal notes for myself. Read them if you want. 
 
 ##Wrangle Notes
-I converted the "-unknown-" strings into NA. I also converted "NDF" in the countries column to NA as well. In my mind, it helps differentiate it from "other" more and makes it clearer that no destination was ever booked. 
 
 Converted the dates from factors to date objects. Don't know how that will help, but can't think of a reason not to. 
 
 Merged the countries metadataset with the training set. Can't think of a reason why latitude and longitude would matter for this analysis, but I'll leave them in unless I can think of a compelling reason not to. 
 
-Possibly create a new column that simply shows a binary trip booked or not variable. 
+Created a new column that simply shows a binary trip booked or not variable. 
 
 Creating a multiple implimentation algorithm (Mice) for filling in the NA values may be useful. Just rememeber not to use the predicted variable, destination! 
+
+What to do with all that missing data? I could omit it, but that's a LOT of data omitted. Like more than half. I could use the Mice algorithm, but the tutorial on it says that missing more than 5% of a feature means that feature should probably be excluded. Should I just simply ignore gender as a factor? That seems wrong. 
+
+#Variables Notes
+date_account_created: Converted to date objects. Dates range from Jan 2010 to July 2014. Nothing really odd here.
+
+timestamp_first_active: Not sure how to interpret this. It says it's a timestamp, but its just numbers in scientific notation. It should be useful, but I'm not sure what the variable is supposed to be. 
+
+date_first_booking: This will be useful, I'm sure, but it's missing data for the NDFs. That makes sense, of course, but I'm wondering how it will mess with my analysis. 
+
+gender: I did a preliminary logistic regression analysis between this and booked/not booked, and it showed that men and women booked trips at roughly the same amount, but people who did not list their gender booked trips at much higher rates. This suggests that people who report their gender on the website are **less** likely to book trips than people who do not report their gender. That's very odd. Additionally, people who reported their gender as "Other", while very small in number, also booked trips at much higher rates. 
+
+age: I wonder about this variable. One would think that age would be a very significant factor in travel habits, and it very likely is, but more than half of the data is empty. There are algorithms I can use to fill in the missing data, such as the MICE algorithm, but with that much of it missing, should I really do that, or just exclude the data altogether? Also, a bunch of people listed their ages at 2014 or 1924 or something. Unless the Highlander is taking a lot of vacations, I think there's a problem here. Should I attempt to correct, or just exclude? Ask Marko. Something's screwy with this column. I hate to cut out valuable information like this, but it may need a buttload of manipulation and wrangling before it's in any shape to be analyzed, and that may render it useless. 
+
+signup_method: The majority of people used the basic signup, which means through the website directly. A significant number also used facebook, and a small number used google, by which I assume they mean their Google Plus account. Have not yet checked to see if variables are related. 
+
+signup_flow: This is supposedly the page a user arrived from, however, the data is numerical and so tells me nothing. I suppose I can just try to correlate it or something and hope it means something to somebody.
+
+language: english is by far the most common, of course. However, it will be interesting to see if language preference predicts country language. I'll need to read more on how to conduct such an analysis, I'm still new to prediction algorithms.
+
+affiliate_channel: What kind of paid marketing. Knowing very little about internet marketing, I'm not sure what a lot of these variables are, but they have to mean something. 
+
+affiliate_provider: Same as above.
+
+first_affiliate_tracked: Same as above.
+
+signup_app: Now we're getting somewhere. Only four levels, easy to analyze. I wonder how well it correlates with a lot of other variables. 
+
+first_browser: There's a lot of little browsers here, but the ones that really matter are Chrome, Safari, Firefox, Internet Explorer, and their mobile versions. I wonder if I should compress all the little browsers into a "Misc" factor. 
+
+country_destination: The target variable. Not surprisingly, the vast majority do not book a trip. Most that do go to the US, hardly surprising. The baseline for my prediction model should therefore be always predicting "NDF", or "US" if given that a trip is booked. 
+
+lat, long, dist, etc: Distance to travel. Not sure how useful this will be, but data is data. From what I read, France was the most popular destination outside of the US, as opposed to English speaking countries like Britain, Canada, or Australia, so maybe destination language is not as important to international travelers. Maybe I should group international travel separately? More things to bounce off Marko!
+
+language_levenshtein_distance and destination language: What I THINK this means is the algorithmic distance between english and the native language. This means that Dutch is most closely related to English, followed by German, and then the romance languages. This could be helpful in predicting destinations: obviously people will be more reluctant to go somewhere they don't speak the language. If only Asian countries were included in the data! Most people in Western Europe, especially the Netherlands, speak English, so that's harder to compute. 
+
 
 ##Manipulating Sessions_df
 
@@ -31,10 +66,8 @@ Should probably spend some time familiarizing myself with AirBnB's website. Migh
 
 Holy crap there are about 1.8 million different actions the users can take. I have no idea what to do with this information. Okay, I'm dumb. Turns out there are only about 360. I have no idea what I entered to make it look like 1.8 million. That's a lot more managable. 
 
-I think at this point I would talk to the web people and ask what actions are really meaningful based on how they label them, since I have no idea how to sort through this mess. Give me some numbers to crunch, not this bazillion factor garbage. 
-Disregard the above due to idiocy. 
 
-Possible variables for this dataset: Booked/Not booked, Number of actions till booking, device type, average time to booking (beware outliers! This is heavily skewed. Maybe use median instead.) While around 360 is a lot more manageable than the millions previously thought (seriously, how did I get that?), I'm still not familiar enough with the website and business to parse out every action. I'll have to rely on aggregate statistics. 
+Possible variables for this dataset: Booked/Not booked, Number of actions till booking, device type, average time to booking (beware outliers! This is heavily skewed. Maybe use median instead). While around 360 is a lot more manageable than the millions previously thought (seriously, how did I get that?), I'm still not familiar enough with the website and business to parse out every action. I'll have to rely on aggregate statistics. 
 
 Like what's the difference between "book" and "booking"? That kind of thing. 
 
@@ -54,12 +87,12 @@ The fact that AirBnB allows "Other" as a gender option is very interesting! I wo
 
 I expect lots of multicolinearity within this data! This will have to be taken into account when building my model. 
 
-Read more on multinomial logistic regression! Since I am predicting a categorical variable with more than two levels, this may be what I need. 
+Read more on multinomial logistic regression! Since I am predicting a categorical variable with more than two levels, this may be what I need. It looks like multinomial logistic regression is the way to go here, since I'm predicting a categorical variable with more than two levels. The lessons Springboard provided went over using forests and tree algorithms to predict a binary variable, but not multiple levels. Ask Marko. 
 
 
 ##Random Thoughts
 
-What does levenshtein distance from the countries df mean? 
+What does levenshtein distance from the countries df mean? Maybe Marko can give me an ELI5 version. 
 
 The number of insertions, deletions, or substitutions to get from one string to another? Huh. So is it the distance between target destination language and booking language? It's not clear. Define your variables!
 
