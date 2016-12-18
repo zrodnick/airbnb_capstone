@@ -17,11 +17,11 @@ train_df1 <- left_join(train_df_start, countries_df, by="country_destination")
 #Fix date objects
 train_df1$date_account_created <- as.Date(train_df1$date_account_created)
 train_df1$date_first_booking <- NULL
-
+<<<<<<< HEAD
 train_df1$timestamp_first_active <- as.Date(train_df1$timestamp_first_active, format="%Y %m %d %h %m %s", origin="2009-01-01")
-
-
-
+=======
+train_df1$timestamp_first_active <- as.Date(train_df1$timestamp_first_active, format="")
+>>>>>>> parent of d06f90f... Fix wrangle code.
 
 
 train_df1$country_destination <- as.factor(train_df1$country_destination)
