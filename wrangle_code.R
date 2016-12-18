@@ -66,7 +66,7 @@ sessions_summary <- filter(sessions_summary, user_id != "")
 
 sessions_actions <- select(sessions_df, user_id, action)
 
-sessions_actions2 <- dcast(sessions_actions, user_id ~ action, length)
+sessions_actions2 <- dummy.data.frame(sessions_actions$action, sep="_")
 sessions_actions2 <- filter(sessions_actions2, user_id != "")
 
 sessions_device <- select(sessions_df, user_id, device_type)
