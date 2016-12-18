@@ -17,13 +17,15 @@ train_df1 <- left_join(train_df_start, countries_df, by="country_destination")
 #Fix date objects
 train_df1$date_account_created <- as.Date(train_df1$date_account_created)
 train_df1$date_first_booking <- NULL
+train_df1$timestamp_first_active[train_df1$timestamp_first_active == ""] <- NA
+train_df1$timestamp_first_active <- as.POSIXct(as.character(train_df1$timestamp_first_active), format="%Y%m%d%H%M%S")
 
-train_df1$timestamp_first_active <- as.Date(train_df1$timestamp_first_active, format="%Y %m %d %h %m %s", origin="1970-01-01")
+#Clean up age
 
 
 
 train_df1$country_destination <- as.factor(train_df1$country_destination)
-train_df1$booked <- train_df1$country_destination != "NDF"
+
 train_df1 <- train_df1[, c(1:15,23,16:22)]
 train_df1$age <- NULL
 colnames(train_df1)[1] <- "user_id"
