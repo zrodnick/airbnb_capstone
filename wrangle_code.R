@@ -2,6 +2,8 @@ require(dplyr)
 require(ggplot2)
 require(tidyr)
 require(reshape2)
+require(gtools)
+require(mice)
 
 #load data sets
 
@@ -12,26 +14,42 @@ countries_df <- read.csv("countries.csv")
 
 ##Training set wrangling
 
-train_df1 <- left_join(train_df_start, countries_df, by="country_destination")
+train_df1 <- train_df_start
+colnames(train_df1)[1] <- "user_id"
+
 
 #Fix date objects
 train_df1$date_account_created <- as.Date(train_df1$date_account_created)
 train_df1$date_first_booking <- NULL
 train_df1$timestamp_first_active[train_df1$timestamp_first_active == ""] <- NA
 train_df1$timestamp_first_active <- as.POSIXct(as.character(train_df1$timestamp_first_active), format="%Y%m%d%H%M%S")
+train_df1$timestamp_first_active <- as.Date(train_df1$timestamp_first_active, format="%Y-%m-%d")
+train_df1$timestamp_first_active[is.na(train_df1$timestamp_first_active)] <- train_df1$date_account_created
+
 
 #Clean up age
+train_df1$age[train_df1$age > 98] <- NA
+train_df1$age[train_df1$age < 15] <- NA
 
+# train_df1$age[is.na(train_df1$age)] <- (-1) Why?
 
+train_df1$first_affiliate_tracked[train_df1$first_affiliate_tracked == ""] <- NA
 
 train_df1$country_destination <- as.factor(train_df1$country_destination)
 
-train_df1 <- train_df1[, c(1:15,23,16:22)]
-train_df1$age <- NULL
-colnames(train_df1)[1] <- "user_id"
+
+#Optional NA replacement
+
+train_df2 <- train_df1
+train_df2$age <- NULL
+train_dfclean <- na.omit(train_df2)
+
+train_fe <- train_dfclean
+
+
 
 #sessions set wrangling
-
+require(dummies)
 sessions_df <- group_by(sessions_df, user_id)
 sessions_summary <- sessions_df %>% group_by(user_id) %>% summarise(sec_elapsed_avg = mean(secs_elapsed, na.rm=TRUE), sec_elapsed_total = sum(secs_elapsed, na.rm=TRUE))  
 
@@ -57,6 +75,8 @@ sessions_device2 <- sessions_device %>% group_by(user_id) %>% summarize(device_t
 sessions_device2 <- filter(sessions_device2, user_id != "")
 
 
+sessions_summary <- left_join(sessions_summary, sessions_actions2)
+names(sessions_summary)[names(sessions_summary) == "Var.2"] <- "blank"
 
 #other junk
 
@@ -66,5 +86,8 @@ colnames(actions) <- "actions"
 simple_1 <- select(train_df1,gender,booked,country_destination)
 
 
-train_df2 <- merge(train_df1, sessions_summary, by="user_id", all=TRUE)
+train_df2 <- merge(train_df1, sessions_summary, by="user_id")
+
+#Graphs!
+ggplot(train_dfclean, aes(x=timestamp_first_active, fill=first_affiliate_tracked)) + geom_histogram(binwidth = 250)
 
