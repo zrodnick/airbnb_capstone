@@ -29,6 +29,8 @@ gender: I did a preliminary logistic regression analysis between this and booked
 
 age: I wonder about this variable. One would think that age would be a very significant factor in travel habits, and it very likely is, but more than half of the data is empty. There are algorithms I can use to fill in the missing data, such as the MICE algorithm, but with that much of it missing, should I really do that, or just exclude the data altogether? Also, a bunch of people listed their ages at 2014 or 1924 or something. Unless the Highlander is taking a lot of vacations, I think there's a problem here. Should I attempt to correct, or just exclude? Ask Marko. Something's screwy with this column. I hate to cut out valuable information like this, but it may need a buttload of manipulation and wrangling before it's in any shape to be analyzed, and that may render it useless. 
 
+There may be something I can do here, but I'm not experienced enough for it. I'm going to cut the age column out. 
+
 signup_method: The majority of people used the basic signup, which means through the website directly. A significant number also used facebook, and a small number used google, by which I assume they mean their Google Plus account. Have not yet checked to see if variables are related. 
 
 signup_flow: This is supposedly the page a user arrived from, however, the data is numerical and so tells me nothing. I suppose I can just try to correlate it or something and hope it means something to somebody.
@@ -96,3 +98,4 @@ What does levenshtein distance from the countries df mean? Maybe Marko can give 
 
 The number of insertions, deletions, or substitutions to get from one string to another? Huh. So is it the distance between target destination language and booking language? It's not clear. Define your variables!
 
+Decision: I'm going to ignore the sessions data set for now and just focus on the training set. I'm still new to this after all. 
