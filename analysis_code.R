@@ -1,15 +1,15 @@
-library(xgboost)
-library(readr)
-library(stringr)
-library(caret)
-library(car)
+require(xgboost)
+require(readr)
+require(stringr)
+require(caret)
+require(car)
 
 set.seed(12345)
 
 #cross-validation
-boost.cv <- xgb.cv(data=data.matrix(train_boost[,-1]), label=outcome, objective = "multi:softprob", num_class=12, nrounds=10, eta = .1, seed=12345, nthread=4, max_depth=15, nfold=3)
+boost.cv <- xgb.cv(data=data.matrix(train_boost[,-1]), label=outcome, objective = "multi:softprob", num_class=12, nrounds=10, eta = .1, seed=12345, nthread=4, max_depth=15, nfold=4)
 
-boost2.cv <- xgb.cv(data=data.matrix(train_boost[,-1]), label=outcome, objective = "multi:softprob", num_class=12, nrounds=10, eta = .1, seed=12345, nthread=4, eval_metric="mlogloss", max_depth=15, nfold=3)
+boost2.cv <- xgb.cv(data=data.matrix(train_boost[,-1]), label=outcome, objective = "multi:softprob", num_class=12, nrounds=10, eta = .1, seed=12345, nthread=4, eval_metric="mlogloss", max_depth=15, nfold=4)
 
 #using multiclass error rate as metric (algorithm's choice)
 boost <- xgboost(data=data.matrix(train_boost[,-1]), label=outcome, objective = "multi:softprob", num_class=12, nrounds=50, eta = .1, seed=12345, nthread=4, max_depth=15)

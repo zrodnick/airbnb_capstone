@@ -14,8 +14,6 @@ summarystats_df <- read.csv("age_gender_bkts.csv")
 countries_df <- read.csv("countries.csv")
 test_df <- read.csv("test_users.csv")
 
-xgboost_label <- 
-
 ##Training set wrangling
 
 train_df1 <- train_df_start
