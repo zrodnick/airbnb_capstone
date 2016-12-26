@@ -107,6 +107,10 @@ levels(outcome) = 1:num.class
 outcome <- as.numeric(outcome)
 outcome <- outcome - 1
 
+outcome_labels <- bind_cols(as.data.frame(outcome), as.data.frame(outcome.org))
+outcome_labels$outcome <- as.factor(outcome_labels$outcome)
+outcome_labels <- levels(outcome_labels$outcome.org)
+
 train_boost <- train_full
 train_boost$country_destination <- NULL
 
