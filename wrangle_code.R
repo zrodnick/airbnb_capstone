@@ -5,6 +5,8 @@ require(reshape2)
 require(gtools)
 require(mice)
 require(dummies)
+require(e1071)
+require(mice)
 set.seed(12345)
 #load data sets
 
@@ -38,14 +40,13 @@ train_df1$first_affiliate_tracked[train_df1$first_affiliate_tracked == ""] <- NA
 
 train_df1$country_destination <- as.factor(train_df1$country_destination)
 
-
 #Optional NA replacement
 
 train_df2 <- train_df1
 train_dfclean <- na.omit(train_df2)
 
 age <- train_dfclean[, c("user_id", "age")]
-train_dfclean$age <- NULL
+#train_dfclean$age <- NULL
 
 #Feature Engineering
 
@@ -59,6 +60,18 @@ train_fe <- separate(train_fe, timestamp_first_active, into=c("year_first_active
 
 train_fe <- transform(train_fe, year_account_created = as.numeric(year_account_created), month_account_created=as.numeric(month_account_created), day_account_created=as.numeric(day_account_created), year_first_active=as.numeric(year_first_active), month_first_active=as.numeric(month_first_active), day_first_active=as.numeric(day_first_active))
 
+train_fe$destination_booked <- train_fe[train_fe$country_destination] != "NDF"
+
+#Messing with age
+train_mice <- train_fe[,-1]
+train_mice$age[train_mice$age == -1] <- NA
+
+mice_temp <- mice(data=train_mice)
+
+mice_complete <- complete(mice_temp)
+
+age$age_imputed <- mice_complete$age
+
 #removing outcome variable, save for later
 
 train_join <- train_fe
@@ -67,7 +80,10 @@ train_join <- train_fe
 #sessions set wrangling
 
 sessions_df <- group_by(sessions_df, user_id)
-sessions_summary <- sessions_df %>% group_by(user_id) %>% summarise(sec_elapsed_avg = mean(secs_elapsed, na.rm=TRUE), sec_elapsed_total = sum(secs_elapsed, na.rm=TRUE))  
+
+sessions_summary <- sessions_df %>% group_by(user_id) %>% summarise(secs_elapsed_avg = mean(secs_elapsed, na.rm=TRUE), secs_elapsed_total = sum(secs_elapsed, na.rm=TRUE), secs_elapsed_sd = sd(secs_elapsed, na.rm=TRUE), secs_elapsed_min= min(secs_elapsed, na.rm=TRUE), secs_elapsed_max = max(secs_elapsed, na.rm=TRUE), secs_elapsed_median = median(secs_elapsed, na.rm=TRUE), secs_elapsed_IQR = IQR(secs_elapsed, na.rm=TRUE))  
+
+#Insert skewness and kurtosis
 
 sessions_summary_pl <- sessions_df %>% group_by(user_id) %>% count(user_id)
 
@@ -111,6 +127,8 @@ outcome_labels <- bind_cols(as.data.frame(outcome), as.data.frame(outcome.org))
 outcome_labels$outcome <- as.factor(outcome_labels$outcome)
 outcome_labels <- levels(outcome_labels$outcome.org)
 
+
+
 train_boost <- train_full
 train_boost$country_destination <- NULL
 
@@ -150,16 +168,13 @@ test_df1$age[is.na(test_df1$age)==TRUE] <- -1
 
 test_df1$first_affiliate_tracked[test_df1$first_affiliate_tracked == ""] <- NA
 
-
-
-
 #Optional NA replacement
 
 test_df2 <- test_df1
 test_dfclean <- na.omit(test_df2)
 
 test_age <- test_dfclean[, c("user_id", "age")]
-test_dfclean$age <- NULL
+#test_dfclean$age <- NULL
 
 #Feature Engineering
 
@@ -172,8 +187,6 @@ test_fe <- separate(test_fe, date_account_created, into=c("year_account_created"
 test_fe <- separate(test_fe, timestamp_first_active, into=c("year_first_active", "month_first_active", "day_first_active"), sep="-")
 
 test_fe <- transform(test_fe, year_account_created = as.numeric(year_account_created), month_account_created=as.numeric(month_account_created), day_account_created=as.numeric(day_account_created), year_first_active=as.numeric(year_first_active), month_first_active=as.numeric(month_first_active), day_first_active=as.numeric(day_first_active))
-
-
 
 test_join <- test_fe
 
