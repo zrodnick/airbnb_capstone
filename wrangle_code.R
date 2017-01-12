@@ -14,13 +14,12 @@ sessions_df <- read.csv("sessions.csv", header=TRUE)
 train_df_start <- read.csv("train_users_2.csv", header=TRUE)
 summarystats_df <- read.csv("age_gender_bkts.csv")
 countries_df <- read.csv("countries.csv")
-test_df <- read.csv("test_users.csv")
+
 
 ##Training set wrangling
 
 train_df1 <- train_df_start
 colnames(train_df1)[1] <- "user_id"
-
 
 #Fix date objects
 train_df1$date_account_created <- as.Date(train_df1$date_account_created)
@@ -45,7 +44,7 @@ train_df1$country_destination <- as.factor(train_df1$country_destination)
 train_df2 <- train_df1
 train_dfclean <- na.omit(train_df2)
 
-age <- train_dfclean[, c("user_id", "age")]
+train_age <- train_dfclean[, c("user_id", "age")]
 #train_dfclean$age <- NULL
 
 #Feature Engineering
@@ -60,17 +59,15 @@ train_fe <- separate(train_fe, timestamp_first_active, into=c("year_first_active
 
 train_fe <- transform(train_fe, year_account_created = as.numeric(year_account_created), month_account_created=as.numeric(month_account_created), day_account_created=as.numeric(day_account_created), year_first_active=as.numeric(year_first_active), month_first_active=as.numeric(month_first_active), day_first_active=as.numeric(day_first_active))
 
-train_fe$destination_booked <- train_fe[train_fe$country_destination] != "NDF"
+train_fe$destination_booked <- train_fe$country_destination != "NDF"
 
 #Messing with age
 train_mice <- train_fe[,-1]
 train_mice$age[train_mice$age == -1] <- NA
 
-mice_temp <- mice(data=train_mice)
+mice_complete <- complete(mice(data=train_mice))
 
-mice_complete <- complete(mice_temp)
-
-age$age_imputed <- mice_complete$age
+train_age$age_imputed <- mice_complete$age
 
 #removing outcome variable, save for later
 
@@ -81,7 +78,8 @@ train_join <- train_fe
 
 sessions_df <- group_by(sessions_df, user_id)
 
-sessions_summary <- sessions_df %>% group_by(user_id) %>% summarise(secs_elapsed_avg = mean(secs_elapsed, na.rm=TRUE), secs_elapsed_total = sum(secs_elapsed, na.rm=TRUE), secs_elapsed_sd = sd(secs_elapsed, na.rm=TRUE), secs_elapsed_min= min(secs_elapsed, na.rm=TRUE), secs_elapsed_max = max(secs_elapsed, na.rm=TRUE), secs_elapsed_median = median(secs_elapsed, na.rm=TRUE), secs_elapsed_IQR = IQR(secs_elapsed, na.rm=TRUE))  
+sessions_summary <- sessions_df %>% group_by(user_id) %>% summarise(secs_elapsed_avg = mean(secs_elapsed, na.rm=TRUE), secs_elapsed_total = sum(secs_elapsed, na.rm=TRUE), secs_elapsed_sd = sd(secs_elapsed, na.rm=TRUE), secs_elapsed_min= min(secs_elapsed, na.rm=TRUE), secs_elapsed_max = max(secs_elapsed, na.rm=TRUE), secs_elapsed_median = median(secs_elapsed, na.rm=TRUE), secs_elapsed_IQR = IQR(secs_elapsed, na.rm=TRUE))
+
 
 #Insert skewness and kurtosis
 
@@ -116,21 +114,48 @@ sessions_final <- left_join(sessions_summary, sessions_actions2, by="user_id")
 
 train_full <- inner_join(train_join, sessions_final, by="user_id")
 
-outcome.org <- train_full[, "country_destination"]
-outcome <- outcome.org
-num.class = length(levels(outcome))
-levels(outcome) = 1:num.class
-outcome <- as.numeric(outcome)
-outcome <- outcome - 1
+train_large <- left_join(train_join, sessions_final, by="user_id")
 
-outcome_labels <- bind_cols(as.data.frame(outcome), as.data.frame(outcome.org))
-outcome_labels$outcome <- as.factor(outcome_labels$outcome)
-outcome_labels <- levels(outcome_labels$outcome.org)
+train_boost1 <- train_full
+outcome1.org <- train_boost1[, "destination_booked"]
+outcome1 <- outcome1.org
+num.class1 = length(levels(outcome1))
+levels(outcome1) = 1:num.class1
+outcome1 <- as.numeric(outcome1)
+
+outcomeh.org <- train_boost1[, "country_destination"]
+outcomeh <- outcomeh.org
+num.classh = length(levels(outcomeh))
+levels(outcomeh) = 1:num.classh
+outcomeh <- as.numeric(outcomeh)
+outcomeh <- outcomeh - 1
+outcomeh_labels <- bind_cols(as.data.frame(outcomeh), as.data.frame(outcomeh.org))
+outcomeh_labels$outcome <- as.factor(outcomeh_labels$outcomeh)
+outcomeh_labels <- levels(outcomeh_labels$outcomeh.org)
+
+train_boost1$country_destination <- NULL
+train_boost1$destination_booked <- NULL
+
+train_boost1.1 <- train_boost1
+train_boost1.1$age[train_boost1.1$age == -1] <- train_age$age_imputed
 
 
+train_boost2 <- train_full
+train_boost2$country_destination[train_boost2$country_destination == "NDF"] <- NA 
+train_boost2 <- na.omit(train_boost2)
+outcome2.org <- train_boost2[, "country_destination"]
+outcome2 <- outcome2.org
+num.class2 = length(levels(outcome2))
+levels(outcome2) = 1:num.class2
+outcome2 <- as.numeric(outcome2)
+outcome2 <- outcome2 - 1
+outcome2_labels <- bind_cols(as.data.frame(outcome2), as.data.frame(outcome2.org))
+outcome2_labels$outcome <- as.factor(outcome2_labels$outcome2)
+outcome2_labels <- levels(outcome2_labels$outcome2.org)
+train_boost2$country_destination <- NULL
+train_boost2$destination_booked <- NULL
 
-train_boost <- train_full
-train_boost$country_destination <- NULL
+
 
 #other junk
 
@@ -142,54 +167,3 @@ colnames(actions) <- "actions"
 ggplot(train_df1, aes(x=timestamp_first_active, fill=first_affiliate_tracked)) + geom_histogram(binwidth = 250)
 ggplot(train_full2, aes(x=age))+ geom_histogram()
 
-
-#Things still left to do:
-#Remove ID column
-#Find out what "labels" are. 
-#Wrangle test set
-
-test_df1 <- test_df
-colnames(test_df1)[1] <- "user_id"
-
-
-#Fix date objects
-test_df1$date_account_created <- as.Date(test_df1$date_account_created)
-test_df1$date_first_booking <- NULL
-test_df1$timestamp_first_active[test_df1$timestamp_first_active == ""] <- NA
-test_df1$timestamp_first_active <- as.POSIXct(as.character(test_df1$timestamp_first_active), format="%Y%m%d%H%M%S")
-test_df1$timestamp_first_active <- as.Date(test_df1$timestamp_first_active, format="%Y-%m-%d")
-test_df1$timestamp_first_active[is.na(test_df1$timestamp_first_active)==TRUE] <- test_df1$date_account_created
-
-
-#Clean up age
-test_df1$age[test_df1$age > 98] <- NA
-test_df1$age[test_df1$age < 15] <- NA
-test_df1$age[is.na(test_df1$age)==TRUE] <- -1
-
-test_df1$first_affiliate_tracked[test_df1$first_affiliate_tracked == ""] <- NA
-
-#Optional NA replacement
-
-test_df2 <- test_df1
-test_dfclean <- na.omit(test_df2)
-
-test_age <- test_dfclean[, c("user_id", "age")]
-#test_dfclean$age <- NULL
-
-#Feature Engineering
-
-test_fe <- test_dfclean
-
-test_fe <- dummy.data.frame(test_fe, names=c("gender", "signup_method", "language", "affiliate_channel", "affiliate_provider", "first_affiliate_tracked", "signup_app", "first_device_type", "first_browser"), omit.constants = TRUE, sep="_", fun=as.numeric, dummy.classes = "numeric")
-
-test_fe <- separate(test_fe, date_account_created, into=c("year_account_created", "month_account_created", "day_account_created"), sep="-")
-
-test_fe <- separate(test_fe, timestamp_first_active, into=c("year_first_active", "month_first_active", "day_first_active"), sep="-")
-
-test_fe <- transform(test_fe, year_account_created = as.numeric(year_account_created), month_account_created=as.numeric(month_account_created), day_account_created=as.numeric(day_account_created), year_first_active=as.numeric(year_first_active), month_first_active=as.numeric(month_first_active), day_first_active=as.numeric(day_first_active))
-
-test_join <- test_fe
-
-test_full <- inner_join(test_join, sessions_final, by="user_id")
-
-test_boost <- test_full
