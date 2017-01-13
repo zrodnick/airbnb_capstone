@@ -155,7 +155,23 @@ outcome2_labels <- levels(outcome2_labels$outcome2.org)
 train_boost2$country_destination <- NULL
 train_boost2$destination_booked <- NULL
 
-
+train_boost_large <- train_large
+outcomel.org <- train_boost_large[, "country_destination"]
+outcomel <- outcomel.org
+num.classl = length(levels(outcomel))
+levels(outcomel) = 1:num.classl
+outcomel <- as.numeric(outcomel)
+outcomel <- outcomel - 1
+outcomel_labels <- bind_cols(as.data.frame(outcomel), as.data.frame(outcomel.org))
+outcomel_labels$outcome <- as.factor(outcomel_labels$outcomel)
+outcomel_labels <- levels(outcomel_labels$outcomel.org)
+outcomelb.org <- train_boost_large[, "destination_booked"]
+outcomelb <- outcomelb.org
+num.classlb = length(levels(outcomelb))
+levels(outcomelb) = 1:num.classlb
+outcomelb <- as.numeric(outcomelb)
+train_boost_large$country_destination <- NULL
+train_boost_large$destination_booked <- NULL
 
 #other junk
 
