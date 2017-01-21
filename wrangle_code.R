@@ -16,65 +16,7 @@ summarystats_df <- read.csv("age_gender_bkts.csv")
 countries_df <- read.csv("countries.csv")
 
 
-##Training set wrangling
-
-train_df1 <- train_df_start
-colnames(train_df1)[1] <- "user_id"
-
-#Fix date objects
-train_df1$date_account_created <- as.Date(train_df1$date_account_created)
-train_df1$date_first_booking <- NULL
-train_df1$timestamp_first_active[train_df1$timestamp_first_active == ""] <- NA
-train_df1$timestamp_first_active <- as.POSIXct(as.character(train_df1$timestamp_first_active), format="%Y%m%d%H%M%S")
-train_df1$timestamp_first_active <- as.Date(train_df1$timestamp_first_active, format="%Y-%m-%d")
-train_df1$timestamp_first_active[is.na(train_df1$timestamp_first_active)==TRUE] <- train_df1$date_account_created
-
-
-#Clean up age
-train_df1$age[train_df1$age > 98] <- NA
-train_df1$age[train_df1$age < 15] <- NA
-train_df1$age[is.na(train_df1$age)==TRUE] <- -1
-
-train_df1$first_affiliate_tracked[train_df1$first_affiliate_tracked == ""] <- NA
-
-train_df1$country_destination <- as.factor(train_df1$country_destination)
-
-#Optional NA replacement
-
-train_df2 <- train_df1
-train_dfclean <- na.omit(train_df2)
-
-train_age <- train_dfclean[, c("user_id", "age")]
-#train_dfclean$age <- NULL
-
-#Feature Engineering
-
-train_fe <- train_dfclean
-
-train_fe <- dummy.data.frame(train_fe, names=c("gender", "signup_method", "language", "affiliate_channel", "affiliate_provider", "first_affiliate_tracked", "signup_app", "first_device_type", "first_browser"), omit.constants = TRUE, sep="_", fun=as.numeric, dummy.classes = "numeric")
-
-train_fe <- separate(train_fe, date_account_created, into=c("year_account_created", "month_account_created", "day_account_created"), sep="-")
-
-train_fe <- separate(train_fe, timestamp_first_active, into=c("year_first_active", "month_first_active", "day_first_active"), sep="-")
-
-train_fe <- transform(train_fe, year_account_created = as.numeric(year_account_created), month_account_created=as.numeric(month_account_created), day_account_created=as.numeric(day_account_created), year_first_active=as.numeric(year_first_active), month_first_active=as.numeric(month_first_active), day_first_active=as.numeric(day_first_active))
-
-train_fe$destination_booked <- train_fe$country_destination != "NDF"
-
-#Messing with age
-train_mice <- train_fe[,-1]
-train_mice$age[train_mice$age == -1] <- NA
-
-mice_complete <- complete(mice(data=train_mice))
-
-train_age$age_imputed <- mice_complete$age
-
-#removing outcome variable, save for later
-
-train_join <- train_fe
-
-
-#sessions set wrangling
+## Sessions Wrangling
 
 sessions_df <- group_by(sessions_df, user_id)
 
@@ -110,11 +52,66 @@ sessions_device3 <- dcast(sessions_device3, user_id ~ value + variable, length)
 sessions_summary <- left_join(sessions_summary, sessions_device3, by="user_id")
 sessions_final <- left_join(sessions_summary, sessions_actions2, by="user_id")
 
+
+##Training set wrangling
+
+
+
+train_df1 <- train_df_start
+colnames(train_df1)[1] <- "user_id"
+
+#Fix date objects
+train_df1$date_account_created <- as.Date(train_df1$date_account_created)
+train_df1$date_first_booking <- NULL
+train_df1$timestamp_first_active[train_df1$timestamp_first_active == ""] <- NA
+train_df1$timestamp_first_active <- as.POSIXct(as.character(train_df1$timestamp_first_active), format="%Y%m%d%H%M%S")
+train_df1$timestamp_first_active <- as.Date(train_df1$timestamp_first_active, format="%Y-%m-%d")
+train_df1$timestamp_first_active[is.na(train_df1$timestamp_first_active)==TRUE] <- train_df1$date_account_created
+
+
+#Clean up age
+train_df1$age[train_df1$age > 98] <- NA
+train_df1$age[train_df1$age < 15] <- NA
+train_df1$age[is.na(train_df1$age)==TRUE] <- -1
+
+train_df1$first_affiliate_tracked[train_df1$first_affiliate_tracked == ""] <- NA
+
+train_df1$country_destination <- as.factor(train_df1$country_destination)
+
+#Optional NA replacement
+
+train_df2 <- train_df1
+train_dfclean <- na.omit(train_df2)
+
+train_age <- train_dfclean[, c("user_id", "age")]
+#train_dfclean$age <- NULL
+
+#Feature Engineering
+
+train_fe <- train_dfclean
+
+train_fe <- dummy.data.frame(train_fe, names=c("gender", "signup_method", "signup_flow", "language", "affiliate_channel", "affiliate_provider", "first_affiliate_tracked", "signup_app", "first_device_type", "first_browser"), omit.constants = TRUE, sep="_", fun=as.numeric, dummy.classes = "numeric")
+
+train_fe <- separate(train_fe, date_account_created, into=c("year_account_created", "month_account_created", "day_account_created"), sep="-")
+
+train_fe <- separate(train_fe, timestamp_first_active, into=c("year_first_active", "month_first_active", "day_first_active"), sep="-")
+
+train_fe <- transform(train_fe, year_account_created = as.numeric(year_account_created), month_account_created=as.numeric(month_account_created), day_account_created=as.numeric(day_account_created), year_first_active=as.numeric(year_first_active), month_first_active=as.numeric(month_first_active), day_first_active=as.numeric(day_first_active))
+
+train_fe$destination_booked <- train_fe$country_destination != "NDF"
+
+train_join <- train_fe
+
+train_join[is.na(train_join)] <- -1
+
 #Join sessions and train sets
 
 train_full <- inner_join(train_join, sessions_final, by="user_id")
 
-train_large <- left_join(train_join, sessions_final, by="user_id")
+outcome_labels <- bind_cols(as.data.frame(outcome), as.data.frame(outcome.org))
+outcome_labels$outcome <- as.factor(outcome_labels$outcome)
+outcome_labels <- levels(outcome_labels$outcome.org)
+
 
 train_boost1 <- train_full
 outcome1.org <- train_boost1[, "destination_booked"]
@@ -123,26 +120,22 @@ num.class1 = length(levels(outcome1))
 levels(outcome1) = 1:num.class1
 outcome1 <- as.numeric(outcome1)
 
-outcomeh.org <- train_boost1[, "country_destination"]
-outcomeh <- outcomeh.org
-num.classh = length(levels(outcomeh))
-levels(outcomeh) = 1:num.classh
-outcomeh <- as.numeric(outcomeh)
-outcomeh <- outcomeh - 1
-outcomeh_labels <- bind_cols(as.data.frame(outcomeh), as.data.frame(outcomeh.org))
-outcomeh_labels$outcome <- as.factor(outcomeh_labels$outcomeh)
-outcomeh_labels <- levels(outcomeh_labels$outcomeh.org)
+outcome.org <- train_boost1[, "country_destination"]
+outcome <- outcome.org
+num.class = length(levels(outcome))
+levels(outcome) = 1:num.class
+outcome <- as.numeric(outcome)
+outcome <- outcome - 1
+outcome_labels <- bind_cols(as.data.frame(outcome), as.data.frame(outcome.org))
+outcome_labels$outcome <- as.factor(outcome_labels$outcome)
+outcome_labels <- levels(outcome_labels$outcome.org)
 
 train_boost1$country_destination <- NULL
 train_boost1$destination_booked <- NULL
 
-train_boost1.1 <- train_boost1
-train_boost1.1$age[train_boost1.1$age == -1] <- train_age$age_imputed
 
 
-train_boost2 <- train_full
-train_boost2$country_destination[train_boost2$country_destination == "NDF"] <- NA 
-train_boost2 <- na.omit(train_boost2)
+train_boost2 <- train_join
 outcome2.org <- train_boost2[, "country_destination"]
 outcome2 <- outcome2.org
 num.class2 = length(levels(outcome2))
@@ -155,23 +148,8 @@ outcome2_labels <- levels(outcome2_labels$outcome2.org)
 train_boost2$country_destination <- NULL
 train_boost2$destination_booked <- NULL
 
-train_boost_large <- train_large
-outcomel.org <- train_boost_large[, "country_destination"]
-outcomel <- outcomel.org
-num.classl = length(levels(outcomel))
-levels(outcomel) = 1:num.classl
-outcomel <- as.numeric(outcomel)
-outcomel <- outcomel - 1
-outcomel_labels <- bind_cols(as.data.frame(outcomel), as.data.frame(outcomel.org))
-outcomel_labels$outcome <- as.factor(outcomel_labels$outcomel)
-outcomel_labels <- levels(outcomel_labels$outcomel.org)
-outcomelb.org <- train_boost_large[, "destination_booked"]
-outcomelb <- outcomelb.org
-num.classlb = length(levels(outcomelb))
-levels(outcomelb) = 1:num.classlb
-outcomelb <- as.numeric(outcomelb)
-train_boost_large$country_destination <- NULL
-train_boost_large$destination_booked <- NULL
+
+
 
 #other junk
 

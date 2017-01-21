@@ -5,69 +5,54 @@ require(caret)
 require(car)
 require(dplyr)
 require(tidyr)
+require(Ckmeans.1d.dp)
+require(DMwR)
 
 set.seed(12345)
 
-params <- list( max.depth = 10, eta = 0.005, booster = "gbtree",
+params <- list( max.depth = 9, eta = 0.1,
+                subsample = 0.5, colsample_bytree = 0.5, max_delta_step = 1,
+                objective = "multi:softprob")
+
+params2 <- list( max.depth = 9, eta = 0.1,
                 subsample = 0.5, colsample_bytree = 0.5,
-                objective = "binary:logistic", min_child_weight=1)
+                objective = "rank:pairwise")
 
 
-boost1.cv <- xgb.cv(data=data.matrix(train_boost1[,-1]), params = params, label=outcome1, nrounds=2000, seed=12345, eval_metric="logloss", nthread=6, early_stopping_rounds = 50, nfold=5, missing=-1)
+boost.cv <- xgb.cv(data=data.matrix(train_boost1[,-1]), params=params, label=outcome, num_class=12, nrounds=5000, seed=12345, eval_metric="merror", nfold=5, missing = -1, early_stopping_rounds = 20)
 
-boost1_names <- dimnames(train_boost1)[[2]]
-boost1_names <- boost1_names[-1]
-importance_matrix.cv <- xgb.importance(boost1_names, model=boost1.cv)
-xgb.plot.importance(importance_matrix.cv[1:50,])
-
-
-boost2.cv <- xgb.cv(data=data.matrix(train_boost2[,-1]), label=outcome2,objective = "multi:softprob", num_class=12, nrounds=60, eta = .1, seed=12345, nthread=6, eval_metric="mlogloss", max_depth=10, nfold=5, missing = -1)
-
-
-boosth.cv <- xgb.cv(data=data.matrix(train_boost1[,-1]), label=outcomeh, objective = "multi:softprob", num_class=12, nrounds=1000, eta = .1, seed=12345, nthread=6, eval_metric="mlogloss", max_depth=5, nfold=5, missing = -1, early_stopping_rounds = 5, max_delta_step = 3)
-
-boostl.cv <- xgb.cv(data=data.matrix(train_boost_large[,-1]), label=outcomel, objective = "multi:softprob", num_class=12, nrounds=1000, eta = .1, seed=12345, nthread=6, eval_metric="mlogloss", max_depth=10, nfold=5, early_stopping_rounds = 5, max_delta_step=3)
-
-boostlb.cv <- xgb.cv(data=data.matrix(train_boost_large[,-1]), label=outcomelb, params=params, nthread=6, eval_metric="logloss", nfold=5, early_stopping_rounds = 50, nrounds=2000, max_delta_step=3)
+boost2.cv <- xgb.cv(data=data.matrix(train_boost2[,-1]), params=params, label=outcome2, num_class=12, nrounds=5000, seed=12345, eval_metric="merror", nfold=5, missing = -1, early_stopping_rounds = 50)
 
 #Training the model 
 
-boost1 <- xgboost(data=data.matrix(train_boost1[,-1]), label=outcomelb, params = params, nrounds=1015, seed=12345, eval_metric="logloss", nthread=6, missing= -1) 
+boost1 <- xgboost(data=data.matrix(train_boost1[,-1]), label=outcome, params = params, nrounds=80, seed=12345, num_class=12, eval_metric="merror", nthread=6, missing= -1) 
 
-prob1 <- matrix(predict(boost1, newdata=data.matrix(test_boost1[,-1])), ncol = 1, byrow = T)
-prob1_df <- as.data.frame(prob1)
-prob1_df <- bind_cols(test_user_id, prob1_df)  
+boost2 <- xgboost(data=data.matrix(train_boost2[,-1]), label=outcome2, params = params, nrounds=85, seed=12345, num_class=12, eval_metric="merror", nthread=3, missing= -1) 
 
-
-boost2 <- xgboost(data=data.matrix(train_boost2[,-1]), label=outcome2, objective = "multi:softprob", num_class=12, nrounds=620, eta = .01, seed=12345, eval_metric="mlogloss", nthread=6, max_depth=10, missing= -1)
-
-boost3 <- xgboost(data=data.matrix(train_boost_large[,-1]), label=outcomel, objective = "multi:softprob", num_class=12, nrounds=90, eta = .1, seed=12345, nthread=6, eval_metric="mlogloss", max_depth=10)
-
-boosth <- xgboost(data=data.matrix(train_boost1[,-1]), label=outcomeh, objective = "multi:softprob", num_class=12, nrounds=110, eta = .1, seed=12345, nthread=6, eval_metric="mlogloss", max_depth=5)
-                  
+#Predictions
 
 
-test_user_id <- as.data.frame(test_boost1$user_id)
-colnames(prob2_df) <- outcome_labels
+boost_names <- dimnames(train_boost1)[[2]]
+boost_names <- boost_names[-1]
+importance_matrix <- xgb.importance(boost_names, model=boost1)
+xgb.ggplot.importance(importance_matrix[1:20,])
 
-test_prob1 <- bind_cols(test_user_id, prob_df)
+prob2 <- matrix(predict(boost2, newdata=data.matrix(test_boost2[,-1])), ncol = 12, byrow = T)
+prob2_df <- as.data.frame(prob2)
+test_user_id2 <- as.data.frame(test_boost2$user_id)
+colnames(prob2_df) <- outcome2_labels
+prob2_df <- bind_cols(test_user_id2, prob2_df)
 
+boost_names2 <- dimnames(train_boost2)[[2]]
+boost_names2 <- boost_names2[-1]
+importance_matrix2 <- xgb.importance(boost_names2, model=boost2)
+xgb.ggplot.importance(importance_matrix2[1:20,])
 
+#Confusion matrix
+confusion_df <- prob1_df
 
-prob3 <- matrix(predict(boost3, newdata=data.matrix(test_boost1[,-1])), ncol = 12, byrow = T)
-prob3_df <- as.data.frame(prob3)
-test_user_id <- as.data.frame(test_boost1$user_id)
-colnames(prob3_df) <- outcomel_labels
-submission3 <- bind_cols(test_user_id, prob3_df)
+confusion_df <- mutate(confusion_df, first_prediction = max.col(prob1))
 
-
-submission <- bind_cols(test_user_id, prob_df)
-
-submission2 <- bind_cols(test_boost1[1], prob2_df)
-
-boost2_names <- dimnames(train_boost1)[[2]]
-boost2_names <- boost2_names[-1]
-importance_matrix <- xgb.importance(boost2_names, model=boost1)
-xgb.plot.importance(importance_matrix[1:50,])
+confusion_df$first_prediction <- factor(confusion_df$first_prediction, levels = c(1,2,3,4,5,6,7,8,9,10,11,12), labels=outcome_labels)
 
 

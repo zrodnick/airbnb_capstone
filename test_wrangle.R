@@ -46,7 +46,7 @@ test_age <- test_dfclean[, c("user_id", "age")]
 
 test_fe <- test_dfclean
 
-test_fe <- dummy.data.frame(test_fe, names=c("gender", "signup_method", "language", "affiliate_channel", "affiliate_provider", "first_affiliate_tracked", "signup_app", "first_device_type", "first_browser"), omit.constants = TRUE, sep="_", fun=as.numeric, dummy.classes = "numeric")
+test_fe <- dummy.data.frame(test_fe, names=c("gender", "signup_method", "language", "signup_flow", "affiliate_channel", "affiliate_provider", "first_affiliate_tracked", "signup_app", "first_device_type", "first_browser"), omit.constants = TRUE, sep="_", fun=as.numeric, dummy.classes = "numeric")
 
 test_fe <- separate(test_fe, date_account_created, into=c("year_account_created", "month_account_created", "day_account_created"), sep="-")
 
@@ -58,6 +58,8 @@ test_fe <- transform(test_fe, year_account_created = as.numeric(year_account_cre
 
 test_join <- test_fe
 
+test_boost2 <- test_join
+
 #Join sessions and test sets
 
 test_full <- inner_join(test_join, sessions_final, by="user_id")
@@ -65,7 +67,5 @@ test_full <- inner_join(test_join, sessions_final, by="user_id")
 test_boost1 <- test_full
 test_boost1$country_destination <- NULL
 test_boost1$destination_booked <- NULL
-
-
 
 
