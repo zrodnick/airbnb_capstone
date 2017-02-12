@@ -7,6 +7,7 @@ require(mice)
 require(dummies)
 require(e1071)
 require(mice)
+require(scales)
 set.seed(12345)
 #load data sets
 
@@ -55,8 +56,6 @@ sessions_final <- left_join(sessions_summary, sessions_actions2, by="user_id")
 
 ##Training set wrangling
 
-
-
 train_df1 <- train_df_start
 colnames(train_df1)[1] <- "user_id"
 
@@ -81,8 +80,9 @@ train_df1$country_destination <- as.factor(train_df1$country_destination)
 #Optional NA replacement
 
 train_df2 <- train_df1
-train_dfclean <- na.omit(train_df2)
-
+train_df2[is.na(train_df2)] <- -1
+train_dfclean <- train_df2
+  
 train_age <- train_dfclean[, c("user_id", "age")]
 #train_dfclean$age <- NULL
 
@@ -159,5 +159,58 @@ colnames(actions) <- "actions"
 
 #Graphs!
 ggplot(train_df1, aes(x=timestamp_first_active, fill=first_affiliate_tracked)) + geom_histogram(binwidth = 250)
-ggplot(train_full2, aes(x=age))+ geom_histogram()
+ggplot(train_df1, aes(x=age))+ geom_histogram()
 
+destination_summary <- as.data.frame(summary(train_df1$country_destination))
+colnames(destination_summary) <- "Count"
+destination_summary$Percentages <- percent(prop.table(destination_summary$Count))
+destination_summary$Destination <- rownames(destination_summary)
+destination_summary <- destination_summary[,c(3,1:2)]
+destination_summary <- arrange(destination_summary, desc(Count))
+write.csv(destination_summary, "destination_summary.csv", row.names=TRUE)
+
+ggplot(train_df1, aes(x=date_account_created)) + geom_histogram(color="black", fill="blue", bins=42) + ggtitle("Accounts Created Over Time") + xlab("Date Account Created") + ylab("Frequency")
+
+agebyyear <- as.data.frame(train_df_start$age)
+colnames(agebyyear) <- "Age"
+agebyyear$Year <- as.numeric(train_fe$year_account_created)
+ggplot(agebyyear, aes(x=Age)) + geom_histogram(breaks=c(min(agebyyear$Age), seq(10,100,5), max(agebyyear$Age)), fill="red", col="black") 
+
+ggplot(agebyyear, aes(x=Year, y=Age)) + geom_jitter(col="blue")
+summary(agebyyear$Age)
+summary(ageoutliers)
+
+firstdevice <- as.data.frame(train_fe$year_account_created)
+colnames(firstdevice) <- "Year"
+firstdevice$First_Device <- train_df_start$first_device_type
+
+
+
+firstdevice2010 <- filter(firstdevice, Year == 2010)
+colnames(firstdevice2010) <- c("Year", "2010")
+firstdevice2010table <- as.data.frame(table(firstdevice2010$"2010"))
+firstdevice2010table$Freq <- prop.table(firstdevice2010table$Freq)
+firstdevice2011 <- filter(firstdevice, Year == 2011)
+colnames(firstdevice2011) <- c("Year", "2011")
+firstdevice2011table <- as.data.frame(table(firstdevice2011$"2011"))
+firstdevice2011table$Freq <- prop.table(firstdevice2011table$Freq)
+firstdevice2012 <- filter(firstdevice, Year == 2012)
+colnames(firstdevice2012) <- c("Year", "2012")
+firstdevice2012table <- as.data.frame(table(firstdevice2012$"2012"))
+firstdevice2012table$Freq <- prop.table(firstdevice2012table$Freq)
+firstdevice2013 <- filter(firstdevice, Year == 2013)
+colnames(firstdevice2013) <- c("Year", "2013")
+firstdevice2013table <- as.data.frame(table(firstdevice2013$"2013"))
+firstdevice2013table$Freq <- prop.table(firstdevice2013table$Freq)
+firstdevice2014 <- filter(firstdevice, Year == 2014)
+colnames(firstdevice2014) <- c("Year", "2014")
+firstdevice2014table <- as.data.frame(table(firstdevice2014$"2014"))
+firstdevice2014table$Freq <- prop.table(firstdevice2014table$Freq)
+
+firstdevicefull <- full_join(firstdevice2010table, firstdevice2011table, by="Var1")
+firstdevicefull <- full_join(firstdevicefull, firstdevice2012table, by="Var1")
+firstdevicefull <- full_join(firstdevicefull, firstdevice2013table, by="Var1")
+firstdevicefull <- full_join(firstdevicefull, firstdevice2014table, by="Var1")
+colnames(firstdevicefull) <- c("Device", "2010", "2011", "2012", "2013", "2014")
+firstdevicefull[,2:6] <- round(firstdevicefull[,2:6], 4)
+write.csv(firstdevicefull, "firstdevicefull.csv")
