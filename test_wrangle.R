@@ -37,8 +37,9 @@ test_df1$first_affiliate_tracked[test_df1$first_affiliate_tracked == ""] <- NA
 #Optional NA replacement
 
 test_df2 <- test_df1
-test_dfclean <- na.omit(test_df2)
-
+test_df2[is.na(test_df2)] <- -1
+test_dfclean <- test_df2
+  
 test_age <- test_dfclean[, c("user_id", "age")]
 #test_dfclean$age <- NULL
 
@@ -58,12 +59,13 @@ test_fe <- transform(test_fe, year_account_created = as.numeric(year_account_cre
 
 test_join <- test_fe
 
+
 test_boost2 <- test_join
 
 #Join sessions and test sets
 
-test_full <- inner_join(test_join, sessions_final, by="user_id")
-
+test_full <- left_join(test_join, sessions_final, by="user_id")
+test_full[is.na(test_full)] <- -1
 test_boost1 <- test_full
 test_boost1$country_destination <- NULL
 test_boost1$destination_booked <- NULL
