@@ -23,9 +23,6 @@ sessions_df <- group_by(sessions_df, user_id)
 
 sessions_summary <- sessions_df %>% group_by(user_id) %>% summarise(secs_elapsed_avg = mean(secs_elapsed, na.rm=TRUE), secs_elapsed_total = sum(secs_elapsed, na.rm=TRUE), secs_elapsed_sd = sd(secs_elapsed, na.rm=TRUE), secs_elapsed_min= min(secs_elapsed, na.rm=TRUE), secs_elapsed_max = max(secs_elapsed, na.rm=TRUE), secs_elapsed_median = median(secs_elapsed, na.rm=TRUE), secs_elapsed_IQR = IQR(secs_elapsed, na.rm=TRUE))
 
-
-#Insert skewness and kurtosis
-
 sessions_summary_pl <- sessions_df %>% group_by(user_id) %>% count(user_id)
 
 sessions_sum2 <- select(sessions_df, user_id, device_type) %>% distinct(device_type)
